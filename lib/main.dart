@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// App entry point
 void main() {
   runApp(const ExivisApp());
 }
 
+/// Root widget of the application
 class ExivisApp extends StatelessWidget {
   const ExivisApp({super.key});
 
@@ -11,467 +13,280 @@ class ExivisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: ExivisHomePage(),
     );
   }
 }
 
-/* ---------------- LOGIN SCREEN ---------------- */
-
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+/// Home page
+class ExivisHomePage extends StatefulWidget {
+  const ExivisHomePage({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ExivisHomePage> createState() => _ExivisHomePageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  bool _hidePassword = true;
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _ExivisHomePageState extends State<ExivisHomePage> {
+  final TextEditingController _controller = TextEditingController();
+
+  /// Bottom sheet login popup
+  void _showLoginPopup(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.55,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white70),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Log in or create an account",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Your AI workspace for models, visuals and conversations",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white60, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              _authButton(
+                "Continue with Google",
+                Colors.white,
+                Colors.black,
+                icon: const Text(
+                  "G",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _authButton("Sign up", const Color(0xFF1E293B), Colors.white),
+              const SizedBox(height: 12),
+              _authButton("Log in", Colors.transparent, Colors.white,
+                  border: true),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Auth button
+  static Widget _authButton(
+    String text,
+    Color bgColor,
+    Color textColor, {
+    bool border = false,
+    Widget? icon,
+  }) {
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        width: double.infinity,
+        height: 44,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+          border: border ? Border.all(color: Colors.white24) : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              icon,
+              const SizedBox(width: 10),
+            ],
+            Text(
+              text,
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onSuggestionTap(String text) {
+    setState(() {
+      _controller.text = text;
+    });
+  }
+
+  void _onSend() {
+    if (_controller.text.trim().isNotEmpty) {
+      debugPrint("User input: ${_controller.text}");
+      _controller.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final double fieldWidth = MediaQuery.of(context).size.width > 600
-        ? 400
-        : MediaQuery.of(context).size.width * 0.85;
-
     return Scaffold(
-      body: backgroundContainer(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
+      backgroundColor: const Color(0xFF0A1A2F),
+      body: SafeArea(
+        child: Column(
+          children: [
+            /// TOP BAR
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Image.asset("assets/images/exivis_logo.png", height: 120),
-                  const SizedBox(height: 30),
+                  IconButton(
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    onPressed: () {},
+                  ),
                   const Text(
-                    "Login",
+                    "Exivis",
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: () => _showLoginPopup(context),
+                    style: TextButton.styleFrom(backgroundColor: Colors.white),
+                    child: const Text(
+                      "Log in",
+                      style: TextStyle(
+                          color: Color(0xFF0A1A2F),
+                          fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  inputField("Email", fieldWidth,
-                      controller: _emailController, required: true),
-                  const SizedBox(height: 16),
-                  passwordField(
-                    "Password",
-                    fieldWidth,
-                    _hidePassword,
-                    () => setState(() => _hidePassword = !_hidePassword),
-                    controller: _passwordController,
-                    validator: passwordValidator,
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: fieldWidth,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const ResetPasswordScreen()),
-                          );
-                        },
-                        child: const Text(
-                          "Forgot Password?",
-                          style: TextStyle(
-                            color: Color(0xFF60A5FA),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  primaryButton("Login", () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Logging in...")));
-                    }
-                  }, whiteText: true),
-                  const SizedBox(height: 20),
-                  const Text("OR", style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 20),
-                  googleButton(fieldWidth),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Don't have an account? ",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SignupScreen()),
-                          );
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
-/* ---------------- SIGNUP SCREEN ---------------- */
+            const Spacer(),
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
-
-  @override
-  State<SignupScreen> createState() => _SignupScreenState();
-}
-
-class _SignupScreenState extends State<SignupScreen> {
-  bool _hidePassword = true;
-  bool _hideConfirmPassword = true;
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    final double fieldWidth = MediaQuery.of(context).size.width > 600
-        ? 400
-        : MediaQuery.of(context).size.width * 0.85;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: backgroundContainer(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Image.asset("assets/images/exivis_logo.png", height: 100),
-                  const SizedBox(height: 24),
-                  inputField("Username", fieldWidth,
-                      controller: _usernameController, required: true),
-                  const SizedBox(height: 16),
-                  inputField("Email", fieldWidth,
-                      controller: _emailController, required: true),
-                  const SizedBox(height: 16),
-                  passwordField(
-                    "Password",
-                    fieldWidth,
-                    _hidePassword,
-                    () => setState(() => _hidePassword = !_hidePassword),
-                    controller: _passwordController,
-                    validator: passwordValidator,
-                  ),
-                  const SizedBox(height: 16),
-                  passwordField(
-                    "Confirm Password",
-                    fieldWidth,
-                    _hideConfirmPassword,
-                    () => setState(
-                        () => _hideConfirmPassword = !_hideConfirmPassword),
-                    controller: _confirmPasswordController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "Please confirm password";
-                      }
-                      if (value != _passwordController.text) {
-                        return "Passwords do not match";
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 30),
-                  primaryButton("Create Account", () {
-                    if (_formKey.currentState!.validate()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Account Created!")));
-                    }
-                  }, whiteText: true),
-                  const SizedBox(height: 20),
-                  const Text("OR", style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 20),
-                  googleButton(fieldWidth),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Already have an account? ",
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Text(
-                          "Sign In",
-                          style: TextStyle(
-                            color: Color(0xFF60A5FA),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            const Text(
+              "What can I help with?",
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
-/* ---------------- RESET PASSWORD SCREEN ---------------- */
+            const SizedBox(height: 24),
 
-class ResetPasswordScreen extends StatelessWidget {
-  const ResetPasswordScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final double fieldWidth = MediaQuery.of(context).size.width > 600
-        ? 400
-        : MediaQuery.of(context).size.width * 0.85;
-    final TextEditingController _emailController = TextEditingController();
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "Reset Password",
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-      ),
-      body: backgroundContainer(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                const SizedBox(height: 30),
-                const Text(
-                  "Enter your email to reset your password",
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                inputField("Email", fieldWidth,
-                    controller: _emailController, required: true),
-                const SizedBox(height: 30),
-                primaryButton(
-                  "Send Reset Link",
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Reset link sent to your email")),
-                    );
-                  },
-                  whiteText: true,
-                ),
+                SuggestionChip(text: "Brainstorm", onTap: _onSuggestionTap),
+                SuggestionChip(text: "Make a plan", onTap: _onSuggestionTap),
+                SuggestionChip(text: "Summarize text", onTap: _onSuggestionTap),
+                SuggestionChip(text: "More", onTap: _onSuggestionTap),
               ],
             ),
-          ),
+
+            const Spacer(),
+
+            /// ASK EXIVIS BAR (CURSOR STARTS FROM LEFT)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 18),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Container(
+                  height: 44,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF132B4A),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      /// PLUS
+                      IconButton(
+                        iconSize: 20,
+                        icon: const Icon(Icons.add, color: Colors.white70),
+                        onPressed: () {},
+                      ),
+
+                      /// TEXT FIELD (LEFT ALIGNED)
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          textAlign: TextAlign.start, // ✅ cursor from left
+                          textAlignVertical: TextAlignVertical.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: "Ask Exivis...",
+                            hintStyle:
+                                TextStyle(color: Colors.white60, fontSize: 14),
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+
+                      /// MIC
+                      IconButton(
+                        iconSize: 20,
+                        icon: const Icon(Icons.mic, color: Colors.white70),
+                        onPressed: () {},
+                      ),
+
+                      /// SEND
+                      IconButton(
+                        iconSize: 20,
+                        icon: const Icon(Icons.send, color: Colors.white),
+                        onPressed: _onSend,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/* ---------------- BACKGROUND ---------------- */
+/// Suggestion chip
+class SuggestionChip extends StatelessWidget {
+  final String text;
+  final Function(String) onTap;
 
-Widget backgroundContainer({required Widget child}) {
-  return Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF0B1C3D),
-          Color(0xFF0A1630),
-          Color(0xFF070E1F),
-        ],
-      ),
-    ),
-    child: child,
-  );
-}
+  const SuggestionChip({
+    super.key,
+    required this.text,
+    required this.onTap,
+  });
 
-/* ---------------- INPUTS ---------------- */
-
-Widget inputField(String label, double width,
-    {bool required = false, TextEditingController? controller}) {
-  return SizedBox(
-    width: width,
-    child: TextFormField(
-      controller: controller,
-      style: const TextStyle(color: Colors.white),
-      validator: required
-          ? (value) {
-              if (value == null || value.isEmpty) {
-                return "$label is required";
-              }
-              return null;
-            }
-          : null,
-      decoration: inputDecoration(label, required),
-    ),
-  );
-}
-
-Widget passwordField(
-    String label, double width, bool obscure, VoidCallback toggle,
-    {TextEditingController? controller, String? Function(String?)? validator}) {
-  return SizedBox(
-    width: width,
-    child: TextFormField(
-      controller: controller,
-      obscureText: obscure,
-      style: const TextStyle(color: Colors.white),
-      validator: validator,
-      decoration: inputDecoration(label, true).copyWith(
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscure ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey,
-          ),
-          onPressed: toggle,
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => onTap(text),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white24),
+          borderRadius: BorderRadius.circular(20),
         ),
+        child: Text(text, style: const TextStyle(color: Colors.white)),
       ),
-    ),
-  );
-}
-
-InputDecoration inputDecoration(String label, bool required) {
-  return InputDecoration(
-    label: RichText(
-      text: TextSpan(
-        text: label,
-        style: const TextStyle(color: Colors.grey),
-        children: required
-            ? const [
-                TextSpan(
-                  text: " *",
-                  style: TextStyle(color: Colors.red),
-                ),
-              ]
-            : [],
-      ),
-    ),
-    filled: true,
-    fillColor: const Color(0xFF0F244A),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide.none,
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-  );
-}
-
-/* ---------------- PASSWORD VALIDATOR ---------------- */
-
-String? passwordValidator(String? value) {
-  if (value == null || value.isEmpty) {
-    return "Password is required";
+    );
   }
-  if (value.length < 8) {
-    return "Password must be at least 8 characters";
-  }
-  if (!RegExp(r'[A-Z]').hasMatch(value)) {
-    return "Include at least one uppercase letter";
-  }
-  if (!RegExp(r'[a-z]').hasMatch(value)) {
-    return "Include at least one lowercase letter";
-  }
-  if (!RegExp(r'[0-9]').hasMatch(value)) {
-    return "Include at least one number";
-  }
-  if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
-    return "Include at least one special character";
-  }
-  return null;
-}
-
-/* ---------------- BUTTONS ---------------- */
-
-Widget primaryButton(String text, VoidCallback onPressed,
-    {bool whiteText = false}) {
-  return ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF2563EB),
-      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-    ),
-    onPressed: onPressed,
-    child: Text(
-      text,
-      style: TextStyle(
-        color: whiteText ? Colors.white : Colors.black,
-        fontWeight: FontWeight.w600,
-      ),
-    ),
-  );
-}
-
-Widget googleButton(double width) {
-  return SizedBox(
-    width: width,
-    height: 48,
-    child: OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Colors.grey),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      onPressed: () {},
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            "G",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(width: 12),
-          Text(
-            "Continue with Google",
-            style: TextStyle(color: Colors.white),
-          ),
-        ],
-      ),
-    ),
-  );
 }
