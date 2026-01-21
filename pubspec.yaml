@@ -1,0 +1,37 @@
+name: exivis_app
+description: Exivis Login & Signup Application
+
+# Prevents accidental publishing to pub.dev
+publish_to: 'none'
+
+# App version
+version: 1.0.0+1
+
+# Flutter SDK constraints
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+# ---------------- DEPENDENCIES ----------------
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Material Icons
+  cupertino_icons: ^1.0.6
+
+# ---------------- DEV DEPENDENCIES ----------------
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+# ---------------- FLUTTER CONFIG ----------------
+flutter:
+
+  uses-material-design: true
+
+  # ---------- ASSETS ----------
+  assets:
+    - assets/images/exivis_logo.png
+    
