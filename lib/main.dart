@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/landing_screen.dart';
+import 'screens/login_signup_screen.dart'; // Import your login/signup screen
 
 void main() {
   runApp(const ExivisApp());
@@ -16,15 +13,8 @@ class ExivisApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Exivis',
-
-      // 👇 FIRST SCREEN (Login)
-      home: const LoginScreen(),
-
-      // 👇 Routes for navigation
-      routes: {
-        '/home': (context) => const HomeScreen(),
-        '/landing': (context) => const LandingScreen(),
-      },
+      theme: ThemeData.dark(), // Optional dark theme
+      home: const LoginScreen(), // Start directly with LoginScreen
     );
   }
 }

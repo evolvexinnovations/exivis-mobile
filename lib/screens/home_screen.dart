@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'login_signup_screen.dart';
 
 /// App entry point
 void main() {
   runApp(const ExivisApp());
 }
 
-/// Root widget of the application
 class ExivisApp extends StatelessWidget {
   const ExivisApp({super.key});
 
@@ -18,7 +18,6 @@ class ExivisApp extends StatelessWidget {
   }
 }
 
-/// Home page
 class ExivisHomePage extends StatefulWidget {
   const ExivisHomePage({super.key});
 
@@ -56,9 +55,10 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
               const Text(
                 "Log in or create an account",
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -67,6 +67,8 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
                 style: TextStyle(color: Colors.white60, fontSize: 13),
               ),
               const SizedBox(height: 24),
+
+              /// GOOGLE (no action yet)
               _authButton(
                 "Continue with Google",
                 Colors.white,
@@ -76,11 +78,43 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
               ),
+
               const SizedBox(height: 12),
-              _authButton("Sign up", const Color(0xFF1E293B), Colors.white),
+
+              /// SIGN UP → SignupScreen
+              _authButton(
+                "Sign up",
+                const Color(0xFF1E293B),
+                Colors.white,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SignupScreen(),
+                    ),
+                  );
+                },
+              ),
+
               const SizedBox(height: 12),
-              _authButton("Log in", Colors.transparent, Colors.white,
-                  border: true),
+
+              /// LOG IN → LoginScreen
+              _authButton(
+                "Log in",
+                Colors.transparent,
+                Colors.white,
+                border: true,
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const LoginScreen(),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         );
@@ -95,9 +129,10 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
     Color textColor, {
     bool border = false,
     Widget? icon,
+    VoidCallback? onTap,
   }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         width: double.infinity,
         height: 44,
@@ -115,7 +150,10 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
             ],
             Text(
               text,
-              style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -156,9 +194,10 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
                   const Text(
                     "Exivis",
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   TextButton(
                     onPressed: () => _showLoginPopup(context),
@@ -166,8 +205,9 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
                     child: const Text(
                       "Log in",
                       style: TextStyle(
-                          color: Color(0xFF0A1A2F),
-                          fontWeight: FontWeight.bold),
+                        color: Color(0xFF0A1A2F),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -196,62 +236,51 @@ class _ExivisHomePageState extends State<ExivisHomePage> {
 
             const Spacer(),
 
-            /// ASK EXIVIS BAR (CURSOR STARTS FROM LEFT)
+            /// CENTERED & ATTRACTIVE ASK EXIVIS BAR
             Padding(
               padding: const EdgeInsets.only(bottom: 18),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Container(
-                  height: 44,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF132B4A),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      /// PLUS
-                      IconButton(
-                        iconSize: 20,
-                        icon: const Icon(Icons.add, color: Colors.white70),
-                        onPressed: () {},
-                      ),
-
-                      /// TEXT FIELD (LEFT ALIGNED)
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          textAlign: TextAlign.start, // ✅ cursor from left
-                          textAlignVertical: TextAlignVertical.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: "Ask Exivis...",
-                            hintStyle:
-                                TextStyle(color: Colors.white60, fontSize: 14),
-                            border: InputBorder.none,
-                            isDense: true,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF132B4A),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x332563EB),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.add, color: Colors.white70),
+                          onPressed: () {},
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _controller,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 14),
+                            decoration: const InputDecoration(
+                              hintText: "Ask Exivis...",
+                              hintStyle: TextStyle(
+                                  color: Colors.white60, fontSize: 14),
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
-                      ),
-
-                      /// MIC
-                      IconButton(
-                        iconSize: 20,
-                        icon: const Icon(Icons.mic, color: Colors.white70),
-                        onPressed: () {},
-                      ),
-
-                      /// SEND
-                      IconButton(
-                        iconSize: 20,
-                        icon: const Icon(Icons.send, color: Colors.white),
-                        onPressed: _onSend,
-                      ),
-                    ],
+                        IconButton(
+                          icon: const Icon(Icons.send, color: Colors.white),
+                          onPressed: _onSend,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

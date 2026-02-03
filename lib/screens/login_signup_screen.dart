@@ -1,23 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const ExivisApp());
-}
-
-class ExivisApp extends StatelessWidget {
-  const ExivisApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
-    );
-  }
-}
+import 'package:http/http.dart' as http;
+import 'landing_screen.dart'; // LandingScreen import
 
 /* ---------------- LOGIN SCREEN ---------------- */
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -27,6 +13,47 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _hidePassword = true;
+
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  // ✅ Full API base URL
+  static const String baseUrl = 'https://api.exivis.pro/api/auth';
+
+  Future<void> loginUser() async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/login"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": emailController.text.trim(),
+          "password": passwordController.text.trim(),
+        }),
+      );
+
+      final data = jsonDecode(res.body);
+
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data["message"] ?? "Login successful")),
+        );
+
+        // ✅ Navigate to LandingScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ExivisLandingPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data["message"] ?? "Login failed")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error connecting to server")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,28 +79,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                inputField("Email", fieldWidth, required: true),
+                inputField("Email", fieldWidth,
+                    controller: emailController, required: true),
                 const SizedBox(height: 16),
                 passwordField(
                   "Password",
                   fieldWidth,
                   _hidePassword,
                   () => setState(() => _hidePassword = !_hidePassword),
+                  controller: passwordController,
                 ),
                 const SizedBox(height: 8),
-                // Forgot Password
                 SizedBox(
                   width: fieldWidth,
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ResetPasswordScreen()),
-                        );
-                      },
+                      onPressed: () {},
                       child: const Text(
                         "Forgot Password?",
                         style: TextStyle(
@@ -85,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                primaryButton("Login", () {}, whiteText: true),
+                primaryButton("Login", loginUser, whiteText: true),
                 const SizedBox(height: 20),
                 const Text("OR", style: TextStyle(color: Colors.grey)),
                 const SizedBox(height: 20),
@@ -94,24 +116,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    const Text("Don't have an account? ",
+                        style: TextStyle(color: Colors.white70)),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SignupScreen()),
-                        );
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignupScreen()),
+                      ),
                       child: const Text(
                         "Sign Up",
                         style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            color: Colors.white, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -126,7 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 /* ---------------- SIGNUP SCREEN ---------------- */
-
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -138,6 +152,40 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _hidePassword = true;
   bool _hideConfirmPassword = true;
 
+  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  static const String baseUrl = 'https://api.exivis.pro/api/auth';
+
+  Future<void> signupUser() async {
+    try {
+      final res = await http.post(
+        Uri.parse("$baseUrl/signup"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": usernameController.text.trim(),
+          "email": emailController.text.trim(),
+          "password": passwordController.text.trim(),
+        }),
+      );
+
+      final data = jsonDecode(res.body);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data["message"] ?? "Signup success")),
+      );
+
+      if (res.statusCode == 200) {
+        Navigator.pop(context); // back to login
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error connecting to server")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double fieldWidth = MediaQuery.of(context).size.width > 600
@@ -145,10 +193,6 @@ class _SignupScreenState extends State<SignupScreen> {
         : MediaQuery.of(context).size.width * 0.85;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
       body: backgroundContainer(
         child: Center(
           child: SingleChildScrollView(
@@ -157,15 +201,18 @@ class _SignupScreenState extends State<SignupScreen> {
               children: [
                 Image.asset("assets/images/exivis_logo.png", height: 100),
                 const SizedBox(height: 24),
-                inputField("Username", fieldWidth, required: true),
+                inputField("Username", fieldWidth,
+                    controller: usernameController, required: true),
                 const SizedBox(height: 16),
-                inputField("Email", fieldWidth, required: true),
+                inputField("Email", fieldWidth,
+                    controller: emailController, required: true),
                 const SizedBox(height: 16),
                 passwordField(
                   "Password",
                   fieldWidth,
                   _hidePassword,
                   () => setState(() => _hidePassword = !_hidePassword),
+                  controller: passwordController,
                 ),
                 const SizedBox(height: 16),
                 passwordField(
@@ -176,27 +223,22 @@ class _SignupScreenState extends State<SignupScreen> {
                       () => _hideConfirmPassword = !_hideConfirmPassword),
                 ),
                 const SizedBox(height: 30),
-                primaryButton("Create Account", () {}, whiteText: true),
-                const SizedBox(height: 20),
-                const Text("OR", style: TextStyle(color: Colors.grey)),
+                primaryButton("Create Account", signupUser, whiteText: true),
                 const SizedBox(height: 20),
                 googleButton(fieldWidth),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      "Already have an account? ",
-                      style: TextStyle(color: Colors.white70),
-                    ),
+                    const Text("Already have an account? ",
+                        style: TextStyle(color: Colors.white70)),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: const Text(
                         "Sign In",
                         style: TextStyle(
-                          color: Color(0xFF60A5FA),
-                          fontWeight: FontWeight.w600,
-                        ),
+                            color: Color(0xFF60A5FA),
+                            fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -210,64 +252,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 }
 
-/* ---------------- RESET PASSWORD SCREEN ---------------- */
-
-class ResetPasswordScreen extends StatelessWidget {
-  const ResetPasswordScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final double fieldWidth = MediaQuery.of(context).size.width > 600
-        ? 400
-        : MediaQuery.of(context).size.width * 0.85;
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "Reset Password",
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-      ),
-      body: backgroundContainer(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const SizedBox(height: 30),
-                const Text(
-                  "Enter your email to reset your password",
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                inputField("Email", fieldWidth, required: true),
-                const SizedBox(height: 30),
-                primaryButton(
-                  "Send Reset Link",
-                  () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Reset link sent to your email")),
-                    );
-                  },
-                  whiteText: true,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/* ---------------- BACKGROUND ---------------- */
-
+/* ---------------- UI HELPERS ---------------- */
 Widget backgroundContainer({required Widget child}) {
   return Container(
     decoration: const BoxDecoration(
@@ -285,12 +270,12 @@ Widget backgroundContainer({required Widget child}) {
   );
 }
 
-/* ---------------- INPUTS ---------------- */
-
-Widget inputField(String label, double width, {bool required = false}) {
+Widget inputField(String label, double width,
+    {TextEditingController? controller, bool required = false}) {
   return SizedBox(
     width: width,
     child: TextField(
+      controller: controller,
       style: const TextStyle(color: Colors.white),
       decoration: inputDecoration(label, required),
     ),
@@ -298,22 +283,18 @@ Widget inputField(String label, double width, {bool required = false}) {
 }
 
 Widget passwordField(
-  String label,
-  double width,
-  bool obscure,
-  VoidCallback toggle,
-) {
+    String label, double width, bool obscure, VoidCallback toggle,
+    {TextEditingController? controller}) {
   return SizedBox(
     width: width,
     child: TextField(
+      controller: controller,
       obscureText: obscure,
       style: const TextStyle(color: Colors.white),
       decoration: inputDecoration(label, true).copyWith(
         suffixIcon: IconButton(
-          icon: Icon(
-            obscure ? Icons.visibility_off : Icons.visibility,
-            color: Colors.grey,
-          ),
+          icon: Icon(obscure ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey),
           onPressed: toggle,
         ),
       ),
@@ -343,11 +324,8 @@ InputDecoration inputDecoration(String label, bool required) {
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide.none,
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
   );
 }
-
-/* ---------------- BUTTONS ---------------- */
 
 Widget primaryButton(String text, VoidCallback onPressed,
     {bool whiteText = false}) {
@@ -361,9 +339,8 @@ Widget primaryButton(String text, VoidCallback onPressed,
     child: Text(
       text,
       style: TextStyle(
-        color: whiteText ? Colors.white : Colors.black,
-        fontWeight: FontWeight.w600,
-      ),
+          color: whiteText ? Colors.white : Colors.black,
+          fontWeight: FontWeight.w600),
     ),
   );
 }
@@ -373,29 +350,9 @@ Widget googleButton(double width) {
     width: width,
     height: 48,
     child: OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Colors.grey),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
       onPressed: () {},
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Text(
-            "G",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(width: 12),
-          Text(
-            "Continue with Google",
-            style: TextStyle(color: Colors.white),
-          ),
-        ],
-      ),
+      child: const Text("Continue with Google",
+          style: TextStyle(color: Colors.white)),
     ),
   );
 }
