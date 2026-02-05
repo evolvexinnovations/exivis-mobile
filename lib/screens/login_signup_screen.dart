@@ -50,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error connecting to server")),
+        const SnackBar(content: Text("Error connecting to server")),
       );
     }
   }
