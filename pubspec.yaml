@@ -12,11 +12,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+
   # Icons package
   cupertino_icons: ^1.0.2
 
   # HTTP package for backend integration
   http: ^1.1.0
+  shared_preferences: ^2.2.1
 
   # Optional: for state management if needed
   provider: ^6.1.5
@@ -31,3 +33,5 @@ flutter:
 
   assets:
     - assets/images/exivis_logo.png
+
+

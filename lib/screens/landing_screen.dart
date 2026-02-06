@@ -1,21 +1,6 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const ExivisApp());
-}
-
-/// ================= APP =================
-class ExivisApp extends StatelessWidget {
-  const ExivisApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: ExivisLandingPage(),
-    );
-  }
-}
+import 'new_chat.dart';
+import 'subscription.dart';
 
 /// ================= MORE MENU ENUM =================
 enum MoreMenuAction {
@@ -38,24 +23,53 @@ class ExivisLandingPage extends StatefulWidget {
 class _ExivisLandingPageState extends State<ExivisLandingPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _sidebarController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
-  void _snack(String m) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  List<String> allChats = List.generate(20, (i) => "Chat ${i + 1}");
+  List<String> filteredChats = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredChats = allChats;
+  }
+
+  void _searchChats(String query) {
+    setState(() {
+      filteredChats = allChats
+          .where((chat) => chat.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void _handleMoreMenu(MoreMenuAction action) {
+    _snack(action.name);
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final isMobile = c.maxWidth < 800;
+    return LayoutBuilder(builder: (context, constraints) {
+      bool isMobile = constraints.maxWidth < 800;
 
-      return Scaffold(
-        key: _scaffoldKey,
-        drawer: isMobile ? Drawer(child: _sidebar(true)) : null,
-        body: Row(
-          children: [
-            if (!isMobile) _sidebar(false),
-            Expanded(child: _mainArea(isMobile)),
-          ],
+      return ScrollbarTheme(
+        data: ScrollbarThemeData(
+          thumbColor: MaterialStateProperty.all(Colors.white),
+          thickness: MaterialStateProperty.all(6),
+          radius: const Radius.circular(20),
+        ),
+        child: Scaffold(
+          key: _scaffoldKey,
+          drawer: isMobile ? Drawer(child: _sidebar(true)) : null,
+          body: Row(
+            children: [
+              if (!isMobile) _sidebar(false),
+              Expanded(child: _mainArea(isMobile)),
+            ],
+          ),
         ),
       );
     });
@@ -67,20 +81,23 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
       width: 260,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
+          colors: [Color(0xFF0A1A2F), Color(0xFF040B17)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF0A1A2F), Color(0xFF040B17)],
         ),
       ),
       child: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 12),
+
+            /// NEW CHAT BUTTON
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ElevatedButton.icon(
                 onPressed: () {
                   if (isDrawer) Navigator.pop(context);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const NewChatScreen()),
@@ -89,29 +106,56 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
                 icon: const Icon(Icons.add),
                 label: const Text("New Chat"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.lightBlue,
+                  foregroundColor: Colors.black,
                   minimumSize: const Size(double.infinity, 46),
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+
+            const SizedBox(height: 12),
+
+            /// SEARCH BAR
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _searchChats,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Search chats...",
+                  hintStyle: const TextStyle(color: Colors.white70),
+                  prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(.08),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            /// CHAT LIST + SCROLLBAR
             Expanded(
               child: Scrollbar(
                 controller: _sidebarController,
                 thumbVisibility: true,
                 child: ListView(
                   controller: _sidebarController,
+                  physics: const BouncingScrollPhysics(),
                   children: [
-                    _side(Icons.search, "Search chats"),
                     _side(Icons.image, "Images"),
                     _side(Icons.folder_open, "Projects"),
                     const Divider(color: Colors.white24),
-                    for (int i = 1; i <= 20; i++) _side(Icons.chat, "Chat $i"),
+                    for (var chat in filteredChats) _side(Icons.chat, chat),
                   ],
                 ),
               ),
             ),
+
             const Padding(
               padding: EdgeInsets.all(12),
               child: Text("V1.0 · Exivis",
@@ -128,14 +172,15 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
+          colors: [Color(0xFF0A1A2F), Color(0xFF040B17)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF0A1A2F), Color(0xFF040B17)],
         ),
       ),
       child: SafeArea(
         child: Column(
           children: [
+            /// TOP BAR
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Row(
@@ -150,36 +195,40 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
                     icon: const Icon(Icons.group, color: Colors.white70),
                     onPressed: () => _snack("Group clicked"),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.chat_bubble_outline,
-                        color: Colors.white70),
-                    onPressed: () => _snack("New chat clicked"),
-                  ),
                   InkWell(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const SubscriptionScreen()),
-                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SubscriptionScreen()),
+                      );
+                    },
                     child: _pill(),
                   ),
                 ],
               ),
             ),
+
+            /// BODY
             Expanded(
               child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
                     const SizedBox(height: 30),
-                    Image.asset("assets/images/exivis_logo.png",
-                        height: isMobile ? 80 : 100),
+                    Image.asset("assets/images/exivis_logo.png", height: 90),
                     const SizedBox(height: 10),
-                    const Text("Exivis",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold)),
+                    const Text(
+                      "Exivis",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 30),
+
+                    /// ACTION BUTTONS
                     Wrap(
                       spacing: 14,
                       runSpacing: 14,
@@ -191,6 +240,7 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
                         _moreMenu(),
                       ],
                     ),
+
                     const SizedBox(height: 40),
                     _askBar(),
                     const SizedBox(height: 30),
@@ -204,14 +254,17 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
     );
   }
 
-  Widget _side(IconData i, String t) {
+  /// ================= SIDEBAR ITEM =================
+  Widget _side(IconData icon, String title) {
     return ListTile(
-      leading: Icon(i, color: Colors.white70),
-      title: Text(t, style: const TextStyle(color: Colors.white70)),
-      onTap: () => _snack("$t clicked"),
+      dense: true,
+      leading: Icon(icon, color: Colors.white),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      onTap: () => _snack("$title clicked"),
     );
   }
 
+  /// ================= TRY GO BUTTON =================
   Widget _pill() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -219,43 +272,39 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
         color: Colors.white.withOpacity(.08),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Row(children: [
-        Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 16),
-        SizedBox(width: 6),
-        Text("Try Go", style: TextStyle(color: Colors.white)),
-      ]),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.auto_awesome, color: Colors.purpleAccent, size: 16),
+          SizedBox(width: 6),
+          Text("Try Go", style: TextStyle(color: Colors.white)),
+        ],
+      ),
     );
   }
 
-  Widget _action(String l, IconData i, Color c) {
+  /// ================= ACTION BUTTON =================
+  Widget _action(String label, IconData icon, Color color) {
     return InkWell(
-      onTap: () => _snack("$l clicked"),
-      child: ActionButton(icon: i, label: l, iconColor: c),
+      onTap: () => _snack("$label clicked"),
+      child: ActionButton(icon: icon, label: label, iconColor: color),
     );
   }
 
+  /// ================= MORE MENU =================
   Widget _moreMenu() {
     return PopupMenuButton<MoreMenuAction>(
       color: const Color(0xFF0A1A2F),
-      onSelected: (v) => _snack(v.name),
-      itemBuilder: (_) => const [
-        PopupMenuItem(
-          value: MoreMenuAction.explainCode,
-          child: Text("Explain Code", style: TextStyle(color: Colors.white)),
-        ),
-        PopupMenuItem(
-          value: MoreMenuAction.debugCode,
-          child: Text("Debug Code", style: TextStyle(color: Colors.white)),
-        ),
-        PopupMenuItem(
-          value: MoreMenuAction.translate,
-          child: Text("Translate", style: TextStyle(color: Colors.white)),
-        ),
-        PopupMenuItem(
-          value: MoreMenuAction.uploadFile,
-          child: Text("Upload File", style: TextStyle(color: Colors.white)),
-        ),
-      ],
+      onSelected: _handleMoreMenu,
+      itemBuilder: (_) => MoreMenuAction.values
+          .map((e) => PopupMenuItem(
+                value: e,
+                child: Text(
+                  e.name,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ))
+          .toList(),
       child: const ActionButton(
         icon: Icons.more_horiz,
         label: "More",
@@ -264,6 +313,7 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
     );
   }
 
+  /// ================= ASK BAR =================
   Widget _askBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -274,39 +324,51 @@ class _ExivisLandingPageState extends State<ExivisLandingPage> {
           color: Colors.white.withOpacity(.12),
           borderRadius: BorderRadius.circular(40),
         ),
-        child: const Row(children: [
-          Icon(Icons.add, color: Colors.blueAccent),
-          SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              style: TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Ask Exivis...",
-                hintStyle: TextStyle(color: Colors.white70),
-                border: InputBorder.none,
+        child: Row(
+          children: [
+            InkWell(
+              onTap: () => _snack("Add clicked"),
+              child: const Icon(Icons.add, color: Colors.blueAccent),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: TextField(
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Ask Exivis...",
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
               ),
             ),
-          ),
-          Icon(Icons.mic, color: Colors.white70),
-          SizedBox(width: 6),
-          Icon(Icons.arrow_upward, color: Colors.blueAccent),
-        ]),
+            InkWell(
+              onTap: () => _snack("Mic clicked"),
+              child: const Icon(Icons.mic, color: Colors.white70),
+            ),
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: () => _snack("Send clicked"),
+              child: const Icon(Icons.arrow_upward, color: Colors.blueAccent),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// ================= ACTION BUTTON =================
+/// ================= ACTION BUTTON WIDGET =================
 class ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color iconColor;
 
-  const ActionButton(
-      {super.key,
-      required this.icon,
-      required this.label,
-      required this.iconColor});
+  const ActionButton({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -321,328 +383,6 @@ class ActionButton extends StatelessWidget {
         const SizedBox(width: 8),
         Text(label, style: const TextStyle(color: Colors.white)),
       ]),
-    );
-  }
-}
-
-/// ================= NEW CHAT =================
-class NewChatScreen extends StatelessWidget {
-  const NewChatScreen({super.key});
-
-  void _snack(BuildContext context, String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A1A2F),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Spacer(),
-                  const Text(
-                    "Exivis",
-                    style: TextStyle(
-                      color: Colors.blueAccent,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                ],
-              ),
-            ),
-            const SizedBox(height: 60),
-            Expanded(
-              child: Column(
-                children: [
-                  const Text(
-                    "What’s today’s agenda?",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-                  Container(
-                    width: 420,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(40),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        InkWell(
-                          onTap: () => _snack(context, "Add clicked"),
-                          child:
-                              const Icon(Icons.add, color: Colors.blueAccent),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: TextField(
-                            style: TextStyle(color: Colors.white),
-                            decoration: InputDecoration(
-                              hintText: "Ask Exivis...",
-                              hintStyle: TextStyle(color: Colors.white70),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => _snack(context, "Mic clicked"),
-                          child: const Icon(Icons.mic, color: Colors.white70),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () => _snack(context, "Send clicked"),
-                          child: const Icon(Icons.arrow_upward,
-                              color: Colors.blueAccent),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// ================= SUBSCRIPTION (FIXED) ================
-
-class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
-
-  @override
-  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
-}
-
-class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  int selectedIndex = 1;
-
-  final List<Map<String, dynamic>> plans = [
-    {
-      "title": "Free",
-      "price": "₹0",
-      "features": [
-        "10 Prompts per day",
-        "1 Image Generation",
-        "Basic AI Access"
-      ],
-      "tag": ""
-    },
-    {
-      "title": "Basic",
-      "price": "₹499 / month",
-      "features": [
-        "100 Prompts per day",
-        "5 Image Generations",
-        "Standard AI Models",
-        "Email Support"
-      ],
-      "tag": "POPULAR"
-    },
-    {
-      "title": "Pro",
-      "price": "₹1499 / month",
-      "features": [
-        "Unlimited Prompts",
-        "10 Image Generations",
-        "Advanced AI Models",
-        "Priority Support"
-      ],
-      "tag": "BEST VALUE"
-    },
-    {
-      "title": "Enterprise",
-      "price": "₹1999 / month",
-      "features": [
-        "Unlimited Everything",
-        "Team Access",
-        "Dedicated Manager",
-        "Fastest Response"
-      ],
-      "tag": ""
-    },
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF040B17),
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// HEADER
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    "Choose Your Plan",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-
-            /// PLANS LIST
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: plans.length,
-                itemBuilder: (context, index) {
-                  final plan = plans[index];
-                  final bool isSelected = selectedIndex == index;
-
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => selectedIndex = index);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? const LinearGradient(
-                                colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : const LinearGradient(
-                                colors: [Color(0xFF0A1A2F), Color(0xFF071224)],
-                              ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.blueAccent
-                              : Colors.white.withOpacity(0.08),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          /// TITLE + PRICE + TAG
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                plan["title"],
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              if (plan["tag"] != "")
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    plan["tag"],
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 11),
-                                  ),
-                                )
-                            ],
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          Text(
-                            plan["price"],
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600),
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          /// FEATURES
-                          ...plan["features"].map<Widget>((feature) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.check_circle,
-                                      color: Colors.greenAccent, size: 18),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      feature,
-                                      style: const TextStyle(
-                                          color: Colors.white70),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            /// PURCHASE BUTTON
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: () {
-                  final selectedPlan = plans[selectedIndex]["title"];
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Selected $selectedPlan plan")),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  minimumSize: const Size(double.infinity, 55),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: const Text(
-                  "Continue to Purchase",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
     );
   }
 }
